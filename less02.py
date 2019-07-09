@@ -1,6 +1,10 @@
+import json
+
 import spacy
 from spacy.lang.en import English
 from spacy.matcher import Matcher
+from spacy.matcher import PhraseMatcher
+
 from spacy.tokens import Doc, Span
 
 from less01 import print_doc_analysis
@@ -94,9 +98,133 @@ for token in doc:
 
 
 # use large model
+print ('-- 2.8 Word vectors & Semantic Similiarities - large model --')
 nlp = spacy.load("en_core_web_lg")
 
-doc = nlp("Two bananas in pajamas")
+# compare 2 doc
+doc1 = nlp("I like fast food")
+doc2 = nlp("I like pizza")
+print("Fast Food (doc) Similiarity:", doc1.similarity(doc2))
 
-bananas_vector = doc[1].vector
-print (bananas_vector)
+# compare 2 tokens
+doc = nlp("I like chicken thighs and legs")
+token1 = doc[3]
+token2 = doc[5]
+print ("Pizza / Pasta (token) Similarity:", token1.similarity(token2))
+
+# compare doc w/ token
+doc = nlp("I like pizza")
+token = nlp("pasta")[0]
+print ("doc vs token:", doc.similarity(token))
+
+# compare span w/ doc
+span = nlp("I like burgers and fries")[2:5]
+doc = nlp("McDonalds sells burgers")
+print ("doc vs span:", span.similarity(doc))
+
+# --- word vectors ---
+nlp = spacy.load('en_core_web_md')
+
+doc = nlp("I have a banana")
+
+# bananas_vector = doc[3].vector
+# print ("Banana Vector:", len(bananas_vector))
+# print (bananas_vector)
+
+# 2.9 Practice
+doc = nlp("Two bananas in pyjamas")
+
+# bananas_vector = doc[1].vector
+# print ("Banana Vector:", bananas_vector)
+
+# part 1
+doc1 = nlp("It's a warm summer day")
+doc2 = nlp("It's sunny outside")
+print("Doc Sim:", doc1.similarity(doc2))
+
+# part 2
+doc = nlp("magazines and books")
+token1, token2 = doc[0], doc[2]
+print ("2.9 part 2 - Token Similarity:", token1.similarity(token2))
+
+# part 3
+doc = nlp("This was a great restaurant. Afterwards, we went to a really nice bar.")
+span1 = doc[3:5]
+span2 = doc[12:15]
+print ("span1", span1.text)
+print ("span2", span2.text)
+print ('Similarity:', span1.similarity(span2))
+
+print ('---- 11 Combining Models & Rules ----')
+
+def print_match(matches):
+        for match_id, start, end in matches:
+                span = doc[start:end]
+                print ('matched span:', span.text)
+                print ('Root token:', span.root.text)           # category of phrase
+                print ('Root Head token:', span.root.head.text) # parent that governs phrase
+                print ('Previous token:', doc[start-1].text, doc[start-1].pos_)
+
+
+matcher = Matcher(nlp.vocab)   # initialize w/ shared vocabulary
+pattern = [{'LEMMA': 'love', 'POS': 'VERB'}, {'LOWER': 'cats'}]
+matcher.add('LOVE_CATS', None, pattern)
+
+pattern = [{'TEXT': 'very', 'OP': '+'}, {'TEXT': 'happy'}]
+
+# Calling matcher on doc returns list of (match_id, start, end) tuples
+doc = nlp("I love cats and I'm very very happy")
+matches = matcher(doc)
+print_match(matches)
+
+doc = nlp("I have a Golden Retriever")
+print (doc.text)
+matcher = Matcher(nlp.vocab)
+matcher.add('DOG', None, [{'LOWER': 'golden'}, {'LOWER': 'retriever'}])
+
+print_match(matcher(doc))
+
+print ('---- Phrase Matcher ----')
+matcher = PhraseMatcher(nlp.vocab)
+pattern = nlp("Golden Retriever")
+matcher.add('DOG', None, pattern)
+doc = nlp("I have a Golden Retriever")
+
+print (doc.text)
+print_match(matcher(doc))
+
+print ('--- 13 - Debugging Patterns ---')
+
+doc = nlp(
+    "Twitch Prime, the perks program for Amazon Prime members offering free "
+    "loot, games and other benefits, is ditching one of its best features: "
+    "ad-free viewing. According to an email sent out to Amazon Prime members "
+    "today, ad-free viewing will no longer be included as a part of Twitch "
+    "Prime for new members, beginning on September 14. However, members with "
+    "existing annual subscriptions will be able to continue to enjoy ad-free "
+    "viewing until their subscription comes up for renewal. Those with "
+    "monthly subscriptions will have access to ad-free viewing until October 15."
+)
+
+# Create the match patterns
+pattern1 = [{"LOWER": "amazon"}, {"IS_TITLE": True, "POS": "PROPN"}]
+pattern2 = [{"LOWER": "ad"}, {"TEXT":'-'}, {'LOWER': 'free'}, {"POS": "NOUN"}]
+
+# Initialize the Matcher and add the patterns
+matcher = Matcher(nlp.vocab)
+matcher.add("PATTERN1", None, pattern1)
+matcher.add("PATTERN2", None, pattern2)
+
+print (doc.text)
+print ('--- doc analysis ---')
+print_doc_analysis(doc)
+print ('--- matches ---')
+# Iterate over the matches
+for match_id, start, end in matcher(doc):
+    # Print pattern string name and text of matched span
+    print(doc.vocab.strings[match_id], doc[start:end].text)
+
+
+# 14 Efficient Phrase Matching
+with open("exercises/countries.json") as f:
+        COUNTRIES = json.loads(f.read())

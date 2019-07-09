@@ -7,8 +7,8 @@ spacy.prefer_gpu()
 
 def print_doc_analysis(doc):
     for token in doc:
-        print ("Index: {}  is_alpha {} is_punct {} like_num {} POS {} Text: {}".format(
-            token.i, token.is_alpha, token.is_punct, token.like_num, token.pos_, token.text))
+        print ("Index: {} |  is_alpha {} | is_punct {} | like_num {} | is_title {} | POS {} | Text: {}".format(
+            token.i, token.is_alpha, token.is_punct, token.like_num, token.is_title, token.pos_, token.text))
 
 def print_doc_syn_dep(doc):
     for token in doc:
