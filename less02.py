@@ -226,5 +226,5 @@ for match_id, start, end in matcher(doc):
 
 
 # 14 Efficient Phrase Matching
-with open("exercises/countries.json") as f:
+with open("countries.json") as f:
         COUNTRIES = json.loads(f.read())
