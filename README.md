@@ -7,10 +7,10 @@ source activate tensorflow_p36
 ### 1 time per session - each time you start SageMaker
 pip install spacy
 
-### 1 time ONLY
-clone this project
+### 1 time ONLY - clone this project
+cd SageMaker
+git clone https://github.com/duffjay/spacy_tutorial.git
 
-git clone 
 
 
 spaCy Tutorial  
